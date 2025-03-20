@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+
+BUILD_DIR=${1}
+
+cat << EOF
+---
+default_process_types:
+  # We have to use this name!
+  web: bin/refresh-vector . . . && bin/vector --config vector.toml
+EOF
+
+exit 0
