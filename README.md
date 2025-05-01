@@ -1,6 +1,6 @@
 # Vector Scalingo Buildpack
 
-⚠️ This project is a port of the original
+⚠️ This project is a fork of the original
 [Vector Heroku Buildpack](https://github.com/vectordotdev/vector-heroku-buildpack)
 documented for Scalingo.
 
@@ -58,11 +58,12 @@ Now your repository tree should look like:
 
 ```
 .
+├── .buildpacks
 ├── Procfile
 ├── start.sh
 └── vector.toml
 
-1 directory, 3 files
+1 directory, 4 files
 ```
 
 Once committed and pushed to your Git forge, you will be able to
@@ -87,4 +88,6 @@ this out and give us feedback!
 
 ## License
 
-This work is released under the [Unlicense](./LICENSE) terms.
+Documentation of this work is released under the [Unlicense](./LICENSE) terms,
+and the buildpack original code is distributed under the [Apache 2](./LICENSE)
+license terms ; see the [NOTICE](./NOTICE).
