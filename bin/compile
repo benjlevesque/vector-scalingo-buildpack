@@ -67,13 +67,16 @@ fi
 
 echo ""
 echo "Configuration is:"
-cat vector.toml
+cat ${BUILD_DIR}/vector.toml
 echo ""
-echo "Validating:"
-# Stub some values...
-export PORT=8080
-${BUILD_DIR}/bin/vector validate ${BUILD_DIR}/vector.toml
-echo "Valid!"
+
+if (test -z "${VECTOR_SKIP_VALIDATION}"); then
+  echo "Validating:"
+  # Stub some values...
+  export PORT=8080
+  ${BUILD_DIR}/bin/vector validate ${BUILD_DIR}/vector.toml
+  echo "Valid!"
+fi
 
 # Make sure this script is always provisioned.
 if !(test -f ${BUILD_DIR}/bin/refresh-vector); then
