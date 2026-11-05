@@ -12,15 +12,18 @@ mkdir --parents \
   ${CACHE_DIR} \
   ${ENV_DIR}
 
+VECTOR_VERSION=${VECTOR_VERSION:-latest}
+
 # First, set up vector
 if !(test -f ${BUILD_DIR}/bin/vector); then
-  echo "Fetching and extracting Vector (musl, latest stable)"
+
+  echo "Fetching and extracting Vector (musl, ${VECTOR_VERSION})"
   # Use the latest MUSL stable.
   # This is to avoid any gnarly libc issues.
   curl \
     --location \
     --output ${BUILD_DIR}/vector.tar.gz \
-    https://packages.timber.io/vector/latest/vector-x86_64-unknown-linux-musl.tar.gz
+    https://packages.timber.io/vector/${VECTOR_VERSION}/vector-x86_64-unknown-linux-musl.tar.gz
   # Goes to /bin/vector for the user
   tar \
     --extract \
@@ -41,40 +44,50 @@ fi
 # Figure out which config to use.
 # Heroku does this weird thing where they pass env vars as files.
 # See https://devcenter.heroku.com/articles/buildpack-api#bin-compile-summary
+CONFIG_FILE=${BUILD_DIR}/vector.toml
 if (test -f "${ENV_DIR}/VECTOR_TOML_URL"); then
   readonly VECTOR_TOML_URL=`cat ${ENV_DIR}/VECTOR_TOML_URL`
     echo "Detected buildpack env \${VECTOR_TOML_URL} = `cat ${ENV_DIR}/VECTOR_TOML_URL`"
+elif (test -f "${ENV_DIR}/VECTOR_YAML_URL"); then
+  readonly VECTOR_TOML_URL=`cat ${ENV_DIR}/VECTOR_YAML_URL`
+  CONFIG_FILE=${BUILD_DIR}/vector.yaml
+    echo "Detected buildpack env \${VECTOR_YAML_URL} = `cat ${ENV_DIR}/VECTOR_YAML_URL`"
 fi
 
 # If a URL exists, always refresh it.
 if !(test -z "${VECTOR_TOML_URL}"); then
   echo "Found \`\${VECTOR_TOML_URL} = ${VECTOR_TOML_URL}\`"
 
-  echo "Fetching \`\${VECTOR_TOML_URL}\` to \`${BUILD_DIR}/vector.toml\`"
+  echo "Fetching \`\${VECTOR_TOML_URL}\` to \`${CONFIG_FILE}\`"
   curl \
     --location \
-    --output ${BUILD_DIR}/vector.toml \
+    --output ${CONFIG_FILE} \
     ${VECTOR_TOML_URL}
 
 elif (test -f ${BUILD_DIR}/vector.toml); then
-  echo "Using \`${BUILD_DIR}/vector.toml\`"
+  CONFIG_FILE=${BUILD_DIR}/vector.toml
+  echo "Using \`${CONFIG_FILE}\`"
+
+elif (test -f ${BUILD_DIR}/vector.yaml); then
+  CONFIG_FILE=${BUILD_DIR}/vector.yaml
+  echo "Using \`${CONFIG_FILE}\`"
 
 else
-  echo "Adding Vector without a \`./vector.toml\` or \`\${VECTOR_TOML_URL}\`."
+  echo "Adding Vector without a \`./vector.toml\`, \`./vector.yaml\`, \`\${VECTOR_TOML_URL}\`, or \`\${VECTOR_YAML_URL}\`."
   echo "This is unsupported."
   exit 1
 fi
 
 echo ""
 echo "Configuration is:"
-cat ${BUILD_DIR}/vector.toml
+cat ${CONFIG_FILE}
 echo ""
 
 if (test -z "${VECTOR_SKIP_VALIDATION}"); then
   echo "Validating:"
   # Stub some values...
   export PORT=8080
-  ${BUILD_DIR}/bin/vector validate ${BUILD_DIR}/vector.toml
+  ${BUILD_DIR}/bin/vector validate ${CONFIG_FILE}
   echo "Valid!"
 fi
 
